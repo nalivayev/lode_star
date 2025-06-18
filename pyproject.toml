@@ -3,11 +3,11 @@ name = "lode_star"
 version = "0.1.0"
 description = "NMEA TCP Server for simulating GPS data"
 authors = [
-    { name = "Your Name", email = "your@email.com" }
+    { name = "Andrey Nalivayev", email = "nalivayev@gmail.com" }
 ]
 readme = "README.md"
 requires-python = ">=3.7"
-license = { text = "MIT" }
+license = { file = "LICENSE.md" }
 
 [project.scripts]
 lode-star = "lode_star.cli:main"

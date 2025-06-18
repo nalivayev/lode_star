@@ -42,6 +42,31 @@ class NMEAGenerator(ABC):
         """
         pass
 
+    def get_speed_knots(self) -> float:
+        """
+        Return current speed in knots for NMEA output.
+        Should be implemented in subclass if speed is dynamic.
+        """
+        return 0.0
+
+    def _format_nmea_coords(self) -> Tuple[str, str, str, str]:
+        """
+        Format latitude and longitude for NMEA sentences.
+        Returns:
+            Tuple[str, str, str, str]: (lat_str, lat_dir, lon_str, lon_dir)
+        """
+        lat_deg: int = int(self.lat)
+        lat_min: float = abs((self.lat - lat_deg) * 60)
+        lat_dir: str = 'N' if self.lat >= 0 else 'S'
+        lat_str: str = f"{abs(lat_deg):02d}{lat_min:09.6f}"
+
+        lon_deg: int = int(self.lon)
+        lon_min: float = abs((self.lon - lon_deg) * 60)
+        lon_dir: str = 'E' if self.lon >= 0 else 'W'
+        lon_str: str = f"{abs(lon_deg):03d}{lon_min:09.6f}"
+
+        return lat_str, lat_dir, lon_str, lon_dir
+
     def generate_rmc(self) -> str:
         """
         Generate an NMEA RMC sentence.
@@ -54,21 +79,15 @@ class NMEAGenerator(ABC):
                 
             time_str: str = self.time.strftime("%H%M%S.%f")[:-3]
             date_str: str = self.time.strftime("%d%m%y")
-            
-            lat_deg: int = int(self.lat)
-            lat_min: float = abs((self.lat - lat_deg) * 60)
-            lat_dir: str = 'N' if self.lat >= 0 else 'S'
-            
-            lon_deg: int = int(self.lon)
-            lon_min: float = abs((self.lon - lon_deg) * 60)
-            lon_dir: str = 'E' if self.lon >= 0 else 'W'
-            
+            speed_knots: float = self.get_speed_knots()
+            lat_str, lat_dir, lon_str, lon_dir = self._format_nmea_coords()
+
             rmc: str = (
-                f"GPRMC,{time_str},A,{abs(lat_deg):02d}{lat_min:09.6f},{lat_dir},"
-                f"{abs(lon_deg):03d}{lon_min:09.6f},{lon_dir},0.0,0.0,{date_str},,,A"
+                f"GPRMC,{time_str},A,{lat_str},{lat_dir},"
+                f"{lon_str},{lon_dir},{speed_knots:.1f},0.0,{date_str},,,A"
             )
             return f"${rmc}*{self.calculate_checksum(rmc)}\r\n"
-    
+
     def generate_gga(self) -> str:
         """
         Generate an NMEA GGA sentence.
@@ -80,18 +99,11 @@ class NMEAGenerator(ABC):
                 return ""
                 
             time_str: str = self.time.strftime("%H%M%S.%f")[:-3]
-            
-            lat_deg: int = int(self.lat)
-            lat_min: float = abs((self.lat - lat_deg) * 60)
-            lat_dir: str = 'N' if self.lat >= 0 else 'S'
-            
-            lon_deg: int = int(self.lon)
-            lon_min: float = abs((self.lon - lon_deg) * 60)
-            lon_dir: str = 'E' if self.lon >= 0 else 'W'
-            
+            lat_str, lat_dir, lon_str, lon_dir = self._format_nmea_coords()
+
             gga: str = (
-                f"GPGGA,{time_str},{abs(lat_deg):02d}{lat_min:09.6f},{lat_dir},"
-                f"{abs(lon_deg):03d}{lon_min:09.6f},{lon_dir},1,08,1.0,0.0,M,0.0,M,,"
+                f"GPGGA,{time_str},{lat_str},{lat_dir},"
+                f"{lon_str},{lon_dir},1,08,1.0,0.0,M,0.0,M,,",
             )
             return f"${gga}*{self.calculate_checksum(gga)}\r\n"
     
@@ -113,20 +125,27 @@ class NMEAGenerator(ABC):
 class DynamicNMEAGenerator(NMEAGenerator):
     """
     NMEA generator that simulates movement along a course with a given speed.
+    Speed is provided in kilometers per hour, but NMEA output is in knots.
     """
-    def __init__(self, initial_lat: float, initial_lon: float, speed_knots: float = 5.0) -> None:
+    def __init__(self, initial_lat: float, initial_lon: float, speed: float = 10.0) -> None:
         """
         Initialize the dynamic generator.
         Args:
             initial_lat (float): Initial latitude.
             initial_lon (float): Initial longitude.
-            speed_knots (float): Speed in knots.
+            speed (float): Speed in kilometers per hour.
         """
         super().__init__()
         self.lat: float = initial_lat
         self.lon: float = initial_lon
-        self.speed_knots: float = speed_knots
+        self.speed: float = speed
         self.heading: int = 0
+
+    def get_speed_knots(self) -> float:
+        """
+        Return current speed in knots for NMEA output.
+        """
+        return self.speed / 1.852
 
     def update_position(self) -> None:
         """
@@ -136,7 +155,8 @@ class DynamicNMEAGenerator(NMEAGenerator):
         while self.running:
             with self.lock:
                 if self.transmitting:
-                    speed_deg_per_sec: float = self.speed_knots * 1.852 / 111.32 / 3600
+                    # 1 degree latitude ≈ 111.32 km
+                    speed_deg_per_sec: float = self.speed / 111.32 / 3600
                     distance: float = speed_deg_per_sec * self.interval_sec
                     rad: float = math.radians(self.heading)
                     
@@ -156,18 +176,18 @@ def create_generator(method_type: str, *method_params: Any) -> NMEAGenerator:
         method_type (str): The generation method ('generate').
         *method_params: Parameters for the generator.
     Returns:
-        NMEAGeneratorBase: An instance of a generator.
+        NMEAGenerator: An instance of a generator.
     Raises:
         ValueError: If parameters are invalid or method is unknown.
     """
     if method_type == 'generate':
         if len(method_params) < 2:
             raise ValueError("For generate method you must specify lat and lon")
-        speed: float = float(method_params[2]) if len(method_params) > 2 else 5.0
+        speed: float = float(method_params[2]) if len(method_params) > 2 else 10.0
         return DynamicNMEAGenerator(
             initial_lat=float(method_params[0]),
             initial_lon=float(method_params[1]),
-            speed_knots=speed
+            speed=speed
         )
     else:
         raise ValueError(f"Unknown method: {method_type}")
@@ -178,7 +198,7 @@ def handle_client(conn: socket.socket, addr: Tuple[str, int], generator: NMEAGen
     Args:
         conn (socket.socket): The client socket.
         addr (tuple): The client address.
-        generator (NMEAGeneratorBase): The NMEA generator instance.
+        generator (NMEAGenerator): The NMEA generator instance.
     """
     print(f"Client connected: {addr}")
     try:
@@ -234,7 +254,7 @@ def run_server(
             print(f"Generation method: {method_type}")
             print(f"Initial position: {method_params[0]}° N, {method_params[1]}° E")
             if len(method_params) > 2:
-                print(f"Speed: {method_params[2]} knots")
+                print(f"Speed: {method_params[2]} km/h")
             print(f"Update interval: {interval_sec} sec")
             print(f"Wait for keypress: {'Yes' if wait_for_keypress else 'No'}")
             print("=" * 40)
@@ -287,7 +307,7 @@ if __name__ == "__main__":
                       help="Generation method and parameters\n"
                            "Format: <method> [params...]\n"
                            "Examples:\n"
-                           "  generate 55.7522 37.6156 [speed=5.0]")
+                           "  generate 55.7522 37.6156 [speed=10.0]")
     parser.add_argument("--wait-for-keypress", action="store_true",
                       help="Wait for keypress before starting transmission")
     

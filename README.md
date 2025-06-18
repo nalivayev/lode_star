@@ -52,17 +52,18 @@ python -m lode_star.cli <port> --method generate <lat> <lon> [speed] [--interval
 - `--method generate <lat> <lon> [speed]`: Generation method and parameters
   - `lat`: Initial latitude (e.g., `55.7522`)
   - `lon`: Initial longitude (e.g., `37.6156`)
-  - `speed`: (optional) Speed in knots (default: `5.0`)
+  - `speed`: (optional) Speed in **kilometers per hour** (default: `10.0`).  
+    **Note:** The NMEA protocol output will always be in knots, but the input speed is set in km/h.
 - `--interval <seconds>`: Position update interval in seconds (default: `1.0`)
 - `--wait-for-keypress`: Wait for ENTER before starting transmission
 
 ### Example
 
 ```sh
-lode-star 5000 --method generate 55.7522 37.6156 10 --interval 0.5 --wait-for-keypress
+lode-star 5000 --method generate 55.7522 37.6156 15 --interval 0.5 --wait-for-keypress
 ```
 
-This command starts the server on port 5000, simulates movement from Moscow at 10 knots, updates every 0.5 seconds, and waits for you to press ENTER before sending data to clients.
+This command starts the server on port 5000, simulates movement from Moscow at 15 km/h, updates every 0.5 seconds, and waits for you to press ENTER before sending data to clients.
 
 ## Connecting Clients
 
@@ -74,6 +75,5 @@ Example using `nc` (netcat):
 nc localhost 5000
 ```
 
-## License
-
-MIT License
+## License  
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

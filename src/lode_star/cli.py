@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Tuple
 
 
-class NMEAGeneratorBase(ABC):
+class NMEAGenerator(ABC):
     """
     Abstract base class for NMEA sentence generators.
     Provides thread safety and methods for generating RMC and GGA sentences.
@@ -110,7 +110,7 @@ class NMEAGeneratorBase(ABC):
         return f"{checksum:02X}"
     
 
-class DynamicNMEAGenerator(NMEAGeneratorBase):
+class DynamicNMEAGenerator(NMEAGenerator):
     """
     NMEA generator that simulates movement along a course with a given speed.
     """
@@ -149,7 +149,7 @@ class DynamicNMEAGenerator(NMEAGeneratorBase):
             time.sleep(self.interval_sec)
 
 
-def create_generator(method_type: str, *method_params: Any) -> NMEAGeneratorBase:
+def create_generator(method_type: str, *method_params: Any) -> NMEAGenerator:
     """
     Factory function to create an NMEA generator.
     Args:
@@ -172,7 +172,7 @@ def create_generator(method_type: str, *method_params: Any) -> NMEAGeneratorBase
     else:
         raise ValueError(f"Unknown method: {method_type}")
 
-def handle_client(conn: socket.socket, addr: Tuple[str, int], generator: NMEAGeneratorBase) -> None:
+def handle_client(conn: socket.socket, addr: Tuple[str, int], generator: NMEAGenerator) -> None:
     """
     Handle a client connection: send NMEA sentences to the client.
     Args:
@@ -213,7 +213,7 @@ def run_server(
         wait_for_keypress (bool): Wait for ENTER before starting transmission.
     """
     try:
-        generator: NMEAGeneratorBase = create_generator(method_type, *method_params)
+        generator: NMEAGenerator = create_generator(method_type, *method_params)
         generator.interval_sec = interval_sec
         
         if not wait_for_keypress:

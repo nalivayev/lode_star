@@ -74,23 +74,6 @@ Example using `nc` (netcat):
 nc localhost 5000
 ```
 
-## Project Structure
-
-```
-lode_star/
-├── pyproject.toml
-├── README.md
-└── src/
-    └── lode_star/
-        ├── __init__.py
-        └── cli.py
-```
-
 ## License
 
 MIT License
-
----
-
-**Author:** Your Name  
-**Repository:** https://github.com/yourusername/lode_star

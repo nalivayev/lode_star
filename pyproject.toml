@@ -1,0 +1,21 @@
+[project]
+name = "lode_star"
+version = "0.1.0"
+description = "NMEA TCP Server for simulating GPS data"
+authors = [
+    { name = "Your Name", email = "your@email.com" }
+]
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+
+[project.scripts]
+lode-star = "lode_star.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["lode_star"]

@@ -5,10 +5,10 @@ This project provides a simple TCP server that generates and streams NMEA GPS se
 ## Features
 
 - Generates synthetic NMEA sentences (RMC and GGA) with configurable start position and speed.
-- Simulates movement along a circular path.
+- Simulates movement along a circular path or along a route from a GeoJSON file.
 - Thread-safe and supports multiple simultaneous client connections.
 - Cross-platform (no admin rights required).
-- Configurable update interval.
+- Configurable update interval (for synthetic mode).
 - Option to start transmission after pressing ENTER.
 
 ## Requirements
@@ -37,33 +37,41 @@ After installation, the `lode-star` command will be available in your terminal.
 Run the server from the command line:
 
 ```sh
-lode-star <port> --method generate <lat> <lon> [speed] [--interval <seconds>] [--wait-for-keypress]
+lode-star <port> --method generate <lat> <lon> [speed=10.0] [interval=1.0] [--wait-for-keypress]
+lode-star <port> --method route <path/to/route.json> [--wait-for-keypress]
 ```
 
 Or, if not installed, you can run directly:
 
 ```sh
-python -m lode_star.cli <port> --method generate <lat> <lon> [speed] [--interval <seconds>] [--wait-for-keypress]
+python -m lode_star.cli <port> --method generate <lat> <lon> [speed=10.0] [interval=1.0] [--wait-for-keypress]
+python -m lode_star.cli <port> --method route <path/to/route.json> [--wait-for-keypress]
 ```
 
 ### Arguments
 
 - `<port>`: TCP port to listen on (e.g., `5000`)
-- `--method generate <lat> <lon> [speed]`: Generation method and parameters
+- `--method generate <lat> <lon> [speed=10.0] [interval=1.0]`: Synthetic movement mode
   - `lat`: Initial latitude (e.g., `55.7522`)
   - `lon`: Initial longitude (e.g., `37.6156`)
-  - `speed`: (optional) Speed in **kilometers per hour** (default: `10.0`).  
-    **Note:** The NMEA protocol output will always be in knots, but the input speed is set in km/h.
-- `--interval <seconds>`: Position update interval in seconds (default: `1.0`)
+  - `speed=...`: (optional, string) Speed in **kilometers per hour** (default: `10.0`).  
+    **Note:** Must be passed as a string in the method list, e.g. `speed=15`
+  - `interval=...`: (optional, string) Position update interval in seconds (default: `1.0`).  
+    **Note:** Must be passed as a string in the method list, e.g. `interval=0.5`
+- `--method route <path/to/route.json>`: Route playback mode using GeoJSON  
+  - `interval` is **not used** in this mode; all timing, speed, and stops are set in the GeoJSON file.
 - `--wait-for-keypress`: Wait for ENTER before starting transmission
 
-### Example
+### Examples
 
 ```sh
-lode-star 5000 --method generate 55.7522 37.6156 15 --interval 0.5 --wait-for-keypress
+lode-star 5000 --method generate 55.7522 37.6156 speed=15 interval=0.5 --wait-for-keypress
+lode-star 5000 --method route ./route.geojson --wait-for-keypress
 ```
 
-This command starts the server on port 5000, simulates movement from Moscow at 15 km/h, updates every 0.5 seconds, and waits for you to press ENTER before sending data to clients.
+The first command starts the server on port 5000, simulates movement from Moscow at 15 km/h, updates every 0.5 seconds, and waits for you to press ENTER before sending data to clients.
+
+The second command starts the server in route mode, playing back a route from `route.geojson`. All intervals, speeds, and stops are defined in the GeoJSON file; the `interval` parameter is ignored in this mode.
 
 ## Connecting Clients
 

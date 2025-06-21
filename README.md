@@ -1,87 +1,161 @@
 # Lode Star NMEA TCP Server
 
-This project provides a simple TCP server that generates and streams NMEA GPS sentences (RMC and GGA) to connected clients. It is useful for simulating GPS data for testing navigation software or hardware.
+This project simulates GPS data transmission over TCP in NMEA format.  
+It supports three generation modes: dynamic simulation (circular movement), route-based playback from a GeoJSON file, and playback from a CSV file.
 
 ## Features
 
-- Generates synthetic NMEA sentences (RMC and GGA) with configurable start position and speed.
-- Simulates movement along a circular path or along a route from a GeoJSON file.
-- Thread-safe and supports multiple simultaneous client connections.
-- Cross-platform (no admin rights required).
-- Configurable update interval (for synthetic mode).
-- Option to start transmission after pressing ENTER.
-
-## Requirements
-
-- Python 3.7+
-- No external dependencies (uses only standard library)
-
-## Installation
-
-Install the package in editable/development mode:
-
-```sh
-pip install -e .
-```
-
-Or install as a regular package:
-
-```sh
-pip install .
-```
-
-After installation, the `lode-star` command will be available in your terminal.
+- **NMEA 0183 output** (RMC, GGA sentences)
+- **Three generation modes**:
+  - **dynamic**: Simulates circular movement from a given point with configurable speed (in km/h), radius, and duration per point
+  - **geojson**: Plays back a route from a GeoJSON file, using per-point speed (in km/h), duration, transition mode, and description
+  - **csv**: Plays back a route from a CSV file, using per-point speed, duration, transition mode, and description
+- **TCP server**: Multiple clients can connect and receive the same NMEA stream
+- **Console output**: Each point's data is printed in a formatted table and updates in-place
+- **Configurable start**: Optionally wait for user keypress before starting transmission
 
 ## Usage
 
-Run the server from the command line:
-
 ```sh
-lode-star <port> --method generate <lat> <lon> [speed=10.0] [interval=1.0] [--wait-for-keypress]
-lode-star <port> --method route <path/to/route.json> [--wait-for-keypress]
+python -m lode_server.cli <port> --method <mode> [params...] [--wait-for-keypress]
 ```
 
-Or, if not installed, you can run directly:
+### Modes and Parameters
 
-```sh
-python -m lode_star.cli <port> --method generate <lat> <lon> [speed=10.0] [interval=1.0] [--wait-for-keypress]
-python -m lode_star.cli <port> --method route <path/to/route.json> [--wait-for-keypress]
+#### 1. Dynamic Generation (`dynamic`)
+
+Simulates circular movement from a starting point.
+
+**Syntax:**
+```
+dynamic <lat> <lon> [speed=<km/h>] [duration=<seconds>] [radius=<km>] [transition=<mode>]
 ```
 
-### Arguments
+- `lat`, `lon` — starting coordinates (float)
+- `speed` — speed in km/h (default: 10.0)
+- `duration` — time in seconds between points (default: 1.0)
+- `radius` — radius of the circular path in km (default: 0.1)
+- `transition` — transition mode: `auto` (default) or `manual`
 
-- `<port>`: TCP port to listen on (e.g., `5000`)
-- `--method generate <lat> <lon> [speed=10.0] [interval=1.0]`: Synthetic movement mode
-  - `lat`: Initial latitude (e.g., `55.7522`)
-  - `lon`: Initial longitude (e.g., `37.6156`)
-  - `speed=...`: (optional, string) Speed in **kilometers per hour** (default: `10.0`).  
-    **Note:** Must be passed as a string in the method list, e.g. `speed=15`
-  - `interval=...`: (optional, string) Position update interval in seconds (default: `1.0`).  
-    **Note:** Must be passed as a string in the method list, e.g. `interval=0.5`
-- `--method route <path/to/route.json>`: Route playback mode using GeoJSON  
-  - `interval` is **not used** in this mode; all timing, speed, and stops are set in the GeoJSON file.
-- `--wait-for-keypress`: Wait for ENTER before starting transmission
-
-### Examples
-
-```sh
-lode-star 5000 --method generate 55.7522 37.6156 speed=15 interval=0.5 --wait-for-keypress
-lode-star 5000 --method route ./route.geojson --wait-for-keypress
+**Example:**
+```
+python -m lode_server.cli 10110 --method dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
 ```
 
-The first command starts the server on port 5000, simulates movement from Moscow at 15 km/h, updates every 0.5 seconds, and waits for you to press ENTER before sending data to clients.
+#### 2. Route Playback (`geojson`)
 
-The second command starts the server in route mode, playing back a route from `route.geojson`. All intervals, speeds, and stops are defined in the GeoJSON file; the `interval` parameter is ignored in this mode.
+Plays back a route from a GeoJSON file.
 
-## Connecting Clients
-
-Any TCP client (e.g., `telnet`, `nc`, or your application) can connect to the specified port to receive live NMEA sentences.
-
-Example using `nc` (netcat):
-
-```sh
-nc localhost 5000
+**Syntax:**
+```
+geojson <path/to/route.json>
 ```
 
-## License  
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+- Each point in the GeoJSON should have `speed` (km/h), `duration` (seconds), and optionally `transition` and `description` in its properties.
+
+**Example:**
+```
+python -m lode_server.cli 10110 --method geojson path/to/route.json
+```
+
+#### 3. CSV Playback (`csv`)
+
+Plays back a route from a CSV file.
+
+**Syntax:**
+```
+csv <path/to/route.csv>
+```
+
+- CSV columns: `point_number,latitude,longitude,speed,elevation,duration,transition,description`
+- Only the first five columns are required; others are optional.
+
+**Example:**
+```
+python -m lode_server.cli 10110 --method csv path/to/route.csv
+```
+
+### Optional Flags
+
+- `--wait-for-keypress` — Wait for user to press ENTER before starting transmission.
+
+## Example Output
+
+```
+NMEA TCP Server started on port 10110
+========================================
+Generation method: dynamic
+Initial position: 55.7522° N, 37.6156° E
+Wait for keypress: No
+========================================
+
+      Point, #:	1
+ Latitude, deg:	55.752200   
+Longitude, deg:	37.615600   
+   Speed, km/h:	10.00       
+ Elevation, m:	0.00        
+         Time:	2025-06-19 12:00:00
+  Description:	
+```
+
+## GeoJSON Route Format
+
+Each feature must be a Point with coordinates `[lon, lat]` and the following properties:
+
+| Property     | Type    | Description                                                                 |
+|--------------|---------|-----------------------------------------------------------------------------|
+| speed        | float   | Speed at this point in **km/h**.                                            |
+| elevation    | float   | Elevation above sea level in meters.                                        |
+| duration     | float   | Duration to stay at this point, in seconds.                                 |
+| transition   | string  | (Optional) Transition mode: `"auto"` (default), `"manual"`, or `"key"`.     |
+| description  | string  | (Optional) Comment or description for this point.                           |
+
+**Example:**
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "speed": 15.0,
+        "elevation": 100.1,
+        "duration": 1.0,
+        "transition": "manual",
+        "description": "Start point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [37.61752, 55.75222]
+      }
+    }
+  ]
+}
+```
+
+## CSV Route Format
+
+CSV columns:
+
+```
+point_number,latitude,longitude,speed,elevation,duration,transition,description
+```
+
+- Only the first five columns are required.
+- `transition` and `description` are optional.
+- Lines starting with `#` are treated as comments.
+
+**Example:**
+```
+1,55.7522,37.6156,10.0,120.5,2.0,auto,"Moscow center"
+2,55.7530,37.6200,12.0,121.0,3.0,manual,"Red Square"
+```
+
+## Notes
+
+- **Speed is always specified in km/h** in all modes and in GeoJSON/CSV.
+- The server prints each point's data and sends NMEA sentences to all connected clients.
+- If `--wait-for-keypress` is used, the server will not start sending data until you press ENTER.
+- For `transition="manual"` in GeoJSON or CSV or generator, the server will wait for ENTER before sending the next point.
+
+---

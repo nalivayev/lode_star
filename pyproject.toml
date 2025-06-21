@@ -1,21 +1,24 @@
 [project]
-name = "lode_star"
+name = "lode_server"
 version = "0.1.0"
-description = "NMEA TCP Server for simulating GPS data"
+description = "NMEA TCP server and generator (dynamic, GeoJSON, CSV, etc)"
 authors = [
     { name = "Andrey Nalivayev", email = "nalivayev@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = { file = "LICENSE.md" }
 
 [project.scripts]
-lode-star = "lode_star.cli:main"
+lode_star = "lode_server.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = [
+    "lode_server",
+    "lode_server.generators",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-packages = ["lode_star"]

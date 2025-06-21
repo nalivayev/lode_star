@@ -42,7 +42,7 @@ dynamic <lat> <lon> [speed=<km/h>] [duration=<seconds>] [radius=<km>] [transitio
 python -m lode_server.cli 10110 --source dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
 ```
 
-#### 2. Route Playback (`geojson`)
+#### 2. GeoJSON Playback (`geojson`)
 
 Plays back a route from a GeoJSON file.
 

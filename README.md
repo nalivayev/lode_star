@@ -158,4 +158,29 @@ point_number,latitude,longitude,speed,elevation,duration,transition,description
 - If `--wait-for-keypress` is used, the server will not start sending data until you press ENTER.
 - For `transition="manual"` in GeoJSON or CSV or generator, the server will wait for ENTER before sending the next point.
 
+## Plugin System
+
+Lode Star uses a plugin system for NMEA generators. Each generator (for example, dynamic, geojson, csv) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
+
+- To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `NMEAGenerator`, and register it with the `@register_generator("your_method_name")` decorator.
+- The generator will be automatically discovered and available via the `--method` command-line option.
+
+**Example:**
+```python
+from lode_server.generator import NMEAGenerator, Position
+from lode_server.generators import register_generator
+
+@register_generator("my_custom")
+class MyCustomGenerator(NMEAGenerator):
+    def __init__(self, *args):
+        super().__init__()
+        # your initialization
+
+    def _update_position(self):
+        # your logic
+        return Position(...)
+```
+
+This approach allows you to extend the server with custom data sources or simulation logic, simply by dropping new generator modules into the `generators` directory.
+
 ---

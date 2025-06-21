@@ -93,9 +93,9 @@ Wait for keypress: No
  Latitude, deg:	55.752200   
 Longitude, deg:	37.615600   
    Speed, km/h:	10.00       
- Elevation, m:	0.00        
-         Time:	2025-06-19 12:00:00
-  Description:	
+  Elevation, m:	0.00        
+          Time:	2025-06-19 12:00:00
+   Description:	
 ```
 
 ## GeoJSON Route Format

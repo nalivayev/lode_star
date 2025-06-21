@@ -8,11 +8,18 @@ from lode_server.generator import NMEAGenerator, NMEAEncoder, Position
 from lode_server.generators import get_generator
 
 
-def create_generator(method: str, *params: Any) -> NMEAGenerator:
+def create_generator(source: str, *params: Any) -> NMEAGenerator:
     """
-    Factory function to create an NMEA generator using plugin system.
+    Factory function to create an NMEA generator using the plugin system.
+
+    Args:
+        source (str): The generator source type (dynamic, geojson, csv, etc).
+        *params: Parameters for the generator.
+
+    Returns:
+        NMEAGenerator: An instance of the selected generator.
     """
-    generator_class = get_generator(method)
+    generator_class = get_generator(source)
     return generator_class(*params)
 
 def print_data(data: Position, counter: int) -> None:
@@ -63,8 +70,8 @@ def broadcast_data(data: Position, encoder: NMEAEncoder, clients: list) -> None:
 
 def run_server(
     port: int,
-    method_type: str,
-    method_params: List[Any],
+    source_type: str,
+    source_params: List[Any],
     wait_for_keypress: bool
 ) -> None:
     """
@@ -72,16 +79,15 @@ def run_server(
 
     Args:
         port (int): TCP port to listen on.
-        method_type (str): Generation method.
-        method_params (list): Parameters for the generator.
+        source_type (str): Generator source type.
+        source_params (list): Parameters for the generator.
         wait_for_keypress (bool): Wait for ENTER before starting transmission.
     """
     clients = []
     try:
-        generator = create_generator(method_type, *method_params)
+        generator = create_generator(source_type, *source_params)
         encoder = NMEAEncoder()
         point_counter = 1
-
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -91,13 +97,9 @@ def run_server(
 
             print(f"\nNMEA TCP Server started on port {port}")
             print("=" * 40)
-            print(f"Generation method: {method_type}")
-            if method_type == 'generate':
-                print(f"Initial position: {method_params[0]}° N, {method_params[1]}° E")
-            elif method_type == 'route':
-                print(f"Route file: {method_params[0]}")
-            elif method_type == 'csv':
-                print(f"CSV file: {method_params[0]}")
+            print(f"Generator source: {source_type}")
+            if source_params:
+                print(f"Source parameters: {', '.join(str(p) for p in source_params)}")
             print(f"Wait for keypress: {'Yes' if wait_for_keypress else 'No'}")
             print("=" * 40)
 
@@ -160,29 +162,30 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("port", type=int, help="TCP port to listen on")
-    parser.add_argument("--method", type=str, required=True, nargs='+',
-                      help="Generation method and parameters\n"
-                           "Format: <method> [params...]\n"
+    parser.add_argument("--source", type=str, required=True, nargs='+',
+                      help="Generator source type and parameters\n"
+                           "Format: <source> [params...]\n"
                            "Examples:\n"
-                           "  generate 55.7522 37.6156 [speed=10.0] [duration=1.0]\n"
-                           "  route path/to/route.json")
+                           "  dynamic 55.7522 37.6156 [speed=10.0] [duration=1.0]\n"
+                           "  geojson path/to/route.json\n"
+                           "  csv path/to/route.csv")
     parser.add_argument("--wait-for-keypress", action="store_true",
                       help="Wait for keypress before starting transmission")
     
     args = parser.parse_args()
     
-    if not args.method:
-        print("Error: Method must be specified")
+    if not args.source:
+        print("Error: Source must be specified")
         sys.exit(1)
     
-    method_type = args.method[0]
-    method_params = args.method[1:] if len(args.method) > 1 else []
+    source_type = args.source[0]
+    source_params = args.source[1:] if len(args.source) > 1 else []
 
     try:
         run_server(
             port=args.port,
-            method_type=method_type,
-            method_params=method_params,
+            source_type=source_type,
+            source_params=source_params,
             wait_for_keypress=args.wait_for_keypress
         )
     except Exception as e:

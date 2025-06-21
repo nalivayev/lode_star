@@ -17,10 +17,10 @@ It supports three generation modes: dynamic simulation (circular movement), rout
 ## Usage
 
 ```sh
-python -m lode_server.cli <port> --method <mode> [params...] [--wait-for-keypress]
+python -m lode_server.cli <port> --source <type> [params...] [--wait-for-keypress]
 ```
 
-### Modes and Parameters
+### Sources and Parameters
 
 #### 1. Dynamic Generation (`dynamic`)
 
@@ -84,7 +84,7 @@ python -m lode_server.cli 10110 --method csv path/to/route.csv
 ```
 NMEA TCP Server started on port 10110
 ========================================
-Generation method: dynamic
+Generator source: dynamic
 Initial position: 55.7522° N, 37.6156° E
 Wait for keypress: No
 ========================================

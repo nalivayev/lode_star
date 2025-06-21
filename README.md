@@ -1,12 +1,12 @@
 # Lode Star NMEA TCP Server
 
 This project simulates GPS data transmission over TCP in NMEA format.  
-It supports three generation modes: dynamic simulation (circular movement), route-based playback from a GeoJSON file, and playback from a CSV file.
+It supports three generator sources: dynamic simulation (circular movement), route-based playback from a GeoJSON file, and playback from a CSV file.
 
 ## Features
 
 - **NMEA 0183 output** (RMC, GGA sentences)
-- **Three generation modes**:
+- **Three generator sources**:
   - **dynamic**: Simulates circular movement from a given point with configurable speed (in km/h), radius, and duration per point
   - **geojson**: Plays back a route from a GeoJSON file, using per-point speed (in km/h), duration, transition mode, and description
   - **csv**: Plays back a route from a CSV file, using per-point speed, duration, transition mode, and description
@@ -39,7 +39,7 @@ dynamic <lat> <lon> [speed=<km/h>] [duration=<seconds>] [radius=<km>] [transitio
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --method dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
+python -m lode_server.cli 10110 --source dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
 ```
 
 #### 2. Route Playback (`geojson`)
@@ -55,7 +55,7 @@ geojson <path/to/route.json>
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --method geojson path/to/route.json
+python -m lode_server.cli 10110 --source geojson path/to/route.json
 ```
 
 #### 3. CSV Playback (`csv`)
@@ -72,7 +72,7 @@ csv <path/to/route.csv>
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --method csv path/to/route.csv
+python -m lode_server.cli 10110 --source csv path/to/route.csv
 ```
 
 ### Optional Flags
@@ -85,7 +85,7 @@ python -m lode_server.cli 10110 --method csv path/to/route.csv
 NMEA TCP Server started on port 10110
 ========================================
 Generator source: dynamic
-Initial position: 55.7522° N, 37.6156° E
+Source parameters: 55.7522, 37.6156, speed=15.0, duration=2.0, radius=0.2, transition=manual
 Wait for keypress: No
 ========================================
 
@@ -151,19 +151,12 @@ point_number,latitude,longitude,speed,elevation,duration,transition,description
 2,55.7530,37.6200,12.0,121.0,3.0,manual,"Red Square"
 ```
 
-## Notes
-
-- **Speed is always specified in km/h** in all modes and in GeoJSON/CSV.
-- The server prints each point's data and sends NMEA sentences to all connected clients.
-- If `--wait-for-keypress` is used, the server will not start sending data until you press ENTER.
-- For `transition="manual"` in GeoJSON or CSV or generator, the server will wait for ENTER before sending the next point.
-
 ## Plugin System
 
 Lode Star uses a plugin system for NMEA generators. Each generator (for example, dynamic, geojson, csv) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
 
-- To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `NMEAGenerator`, and register it with the `@register_generator("your_method_name")` decorator.
-- The generator will be automatically discovered and available via the `--method` command-line option.
+- To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `NMEAGenerator`, and register it with the `@register_generator("your_source_name")` decorator.
+- The generator will be automatically discovered and available via the `--source` command-line option.
 
 **Example:**
 ```python
@@ -182,5 +175,12 @@ class MyCustomGenerator(NMEAGenerator):
 ```
 
 This approach allows you to extend the server with custom data sources or simulation logic, simply by dropping new generator modules into the `generators` directory.
+
+## Notes
+
+- **Speed is always specified in km/h** in all sources and in GeoJSON/CSV.
+- The server prints each point's data and sends NMEA sentences to all connected clients.
+- If `--wait-for-keypress` is used, the server will not start sending data until you press ENTER.
+- For `transition="manual"` in GeoJSON or CSV or generator, the server will wait for ENTER before sending the next point.
 
 ---

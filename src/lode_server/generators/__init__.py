@@ -40,13 +40,41 @@ def get_generator(name: str) -> Type[NMEAGenerator]:
 
 def load_generators():
     """
-    Automatically import and register all generator modules in this package.
-
-    This function scans the current package directory for modules
-    and imports them, so that their registration decorators are executed.
+    Load all built-in and external generator plugins.
+    
+    This function performs two main tasks:
+    1. Automatically imports and registers all generator modules in the current package.
+    2. Discovers and loads external generator plugins using entry points (if available).
+    
+    Built-in generators are loaded by scanning the package directory. External generators
+    are loaded via the entry point group 'nmea_server.generators'.
+    
+    Note:
+        If `importlib.metadata` is not available (Python < 3.8), external plugins
+        will be silently skipped.
+    
+    Side Effects:
+        - Imports all generator modules in the package, executing their decorators.
+        - Populates the `_generators` dictionary with external plugin instances.
     """
+    # Load built-in generators
     package_dir = Path(__file__).parent
     for _, module_name, _ in pkgutil.iter_modules([str(package_dir)]):
         importlib.import_module(f".{module_name}", package=__name__)
+    
+    # Load external plugins via entry points
+    try:
+        from importlib.metadata import entry_points
+        eps = entry_points()
+        if hasattr(eps, 'select'):  # Python 3.10+
+            plugins = eps.select(group='lode_server.generators')
+        else:
+            plugins = eps.get('lode_server.generators', [])
+        
+        for ep in plugins:
+            generator_class = ep.load()
+            _generators[ep.name] = generator_class
+    except ImportError:
+        pass  # Skip if entry points are not supported
 
 load_generators()

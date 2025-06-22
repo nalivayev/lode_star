@@ -4,20 +4,20 @@ import time
 import sys
 from typing import Any, List
 
-from lode_server.generator import NMEAGenerator, NMEAEncoder, Position
+from lode_server.generator import LodeGenerator, NMEAEncoder, Position
 from lode_server.generators import get_generator
 
 
-def create_generator(source: str, *params: Any) -> NMEAGenerator:
+def create_generator(source: str, *params: Any) -> LodeGenerator:
     """
-    Factory function to create an NMEA generator using the plugin system.
+    Factory function to create an Lode generator using the plugin system.
 
     Args:
         source (str): The generator source type (dynamic, geojson, csv, etc).
         *params: Parameters for the generator.
 
     Returns:
-        NMEAGenerator: An instance of the selected generator.
+        LodeGenerator: An instance of the selected generator.
     """
     generator_class = get_generator(source)
     return generator_class(*params)
@@ -44,14 +44,14 @@ def print_data(data: Position, counter: int) -> None:
 
 def broadcast_data(data: Position, encoder: NMEAEncoder, clients: list) -> None:
     """
-    Send NMEA data to all connected clients, removing failed connections.
+    Send data to all connected clients, removing failed connections.
 
     Args:
         data (Position): Position object to encode and send.
         encoder (NMEAEncoder): Encoder for NMEA sentences.
         clients (list): List of active client sockets.
     """
-    # Generate NMEA sentences once for all clients
+    # Generate sentences once for all clients
     rmc = encoder.encode_rmc(data)
     gga = encoder.encode_gga(data)
     
@@ -75,7 +75,7 @@ def run_server(
     wait_for_keypress: bool
 ) -> None:
     """
-    Start the NMEA TCP server.
+    Start the Lode TCP server.
 
     Args:
         port (int): TCP port to listen on.
@@ -95,7 +95,7 @@ def run_server(
             s.listen(5)
             s.settimeout(1)
 
-            print(f"\nNMEA TCP Server started on port {port}")
+            print(f"\nLode TCP Server started on port {port}")
             print("=" * 40)
             print(f"Generator source: {source_type}")
             if source_params:
@@ -157,7 +157,7 @@ def run_server(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="NMEA TCP Server - Simulates GPS data transmission",
+        description="Lode TCP Server - Simulates GPS data transmission",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("port", type=int, help="TCP port to listen on")

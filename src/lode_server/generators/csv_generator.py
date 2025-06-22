@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 from typing import List, Optional
 import csv
 
-from lode_server.generator import NMEAGenerator, Position
+from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
 
 
 @register_generator("csv")
-class CSVGenerator(NMEAGenerator):
+class CSVGenerator(LodeGenerator):
     """
     NMEA generator that reads position data from a CSV file.
     

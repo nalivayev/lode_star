@@ -1,6 +1,6 @@
-# Lode Star NMEA TCP Server
+# Lode Star TCP Server
 
-This project simulates GPS data transmission over TCP in NMEA format.  
+This project simulates GNSS data transmission over TCP.  
 It supports three generator sources: dynamic simulation (circular movement), route-based playback from a GeoJSON file, and playback from a CSV file.
 
 ## Features
@@ -10,7 +10,7 @@ It supports three generator sources: dynamic simulation (circular movement), rou
   - **dynamic**: Simulates circular movement from a given point with configurable speed (in km/h), radius, and duration per point
   - **geojson**: Plays back a route from a GeoJSON file, using per-point speed (in km/h), duration, transition mode, and description
   - **csv**: Plays back a route from a CSV file, using per-point speed, duration, transition mode, and description
-- **TCP server**: Multiple clients can connect and receive the same NMEA stream
+- **TCP server**: Multiple clients can connect and receive the same stream
 - **Console output**: Each point's data is printed in a formatted table and updates in-place
 - **Configurable start**: Optionally wait for user keypress before starting transmission
 
@@ -82,7 +82,7 @@ python -m lode_server.cli 10110 --source csv path/to/route.csv
 ## Example Output
 
 ```
-NMEA TCP Server started on port 10110
+TCP Server started on port 10110
 ========================================
 Generator source: dynamic
 Source parameters: 55.7522, 37.6156, speed=15.0, duration=2.0, radius=0.2, transition=manual
@@ -153,18 +153,18 @@ point_number,latitude,longitude,speed,elevation,duration,transition,description
 
 ## Plugin System
 
-Lode Star uses a plugin system for NMEA generators. Each generator (for example, dynamic, geojson, csv) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
+Lode Star uses a plugin system for generators. Each generator (for example, dynamic, geojson, csv) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
 
-- To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `NMEAGenerator`, and register it with the `@register_generator("your_source_name")` decorator.
+- To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `LodeGenerator`, and register it with the `@register_generator("your_source_name")` decorator.
 - The generator will be automatically discovered and available via the `--source` command-line option.
 
 **Example:**
 ```python
-from lode_server.generator import NMEAGenerator, Position
+from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
 
 @register_generator("my_custom")
-class MyCustomGenerator(NMEAGenerator):
+class MyCustomGenerator(LodeGenerator):
     def __init__(self, *args):
         super().__init__()
         # your initialization
@@ -179,7 +179,7 @@ This approach allows you to extend the server with custom data sources or simula
 ## Notes
 
 - **Speed is always specified in km/h** in all sources and in GeoJSON/CSV.
-- The server prints each point's data and sends NMEA sentences to all connected clients.
+- The server prints each point's data and sends sentences to all connected clients.
 - If `--wait-for-keypress` is used, the server will not start sending data until you press ENTER.
 - For `transition="manual"` in GeoJSON or CSV or generator, the server will wait for ENTER before sending the next point.
 

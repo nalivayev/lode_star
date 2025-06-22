@@ -2,9 +2,9 @@ import importlib
 import pkgutil
 from pathlib import Path
 from typing import Dict, Type
-from ..generator import NMEAGenerator
+from ..generator import LodeGenerator
 
-_generators: Dict[str, Type[NMEAGenerator]] = {}
+_generators: Dict[str, Type[LodeGenerator]] = {}
 
 def register_generator(name: str):
     """
@@ -16,12 +16,12 @@ def register_generator(name: str):
     Returns:
         Callable: The class decorator.
     """
-    def decorator(cls: Type[NMEAGenerator]):
+    def decorator(cls: Type[LodeGenerator]):
         _generators[name] = cls
         return cls
     return decorator
 
-def get_generator(name: str) -> Type[NMEAGenerator]:
+def get_generator(name: str) -> Type[LodeGenerator]:
     """
     Retrieve a registered generator class by name.
 
@@ -29,7 +29,7 @@ def get_generator(name: str) -> Type[NMEAGenerator]:
         name (str): The generator type name.
 
     Returns:
-        Type[NMEAGenerator]: The generator class.
+        Type[LodeGenerator]: The generator class.
 
     Raises:
         ValueError: If the generator type is not registered.
@@ -47,7 +47,7 @@ def load_generators():
     2. Discovers and loads external generator plugins using entry points (if available).
     
     Built-in generators are loaded by scanning the package directory. External generators
-    are loaded via the entry point group 'nmea_server.generators'.
+    are loaded via the entry point group 'lode_server.generators'.
     
     Note:
         If `importlib.metadata` is not available (Python < 3.8), external plugins
@@ -75,6 +75,6 @@ def load_generators():
             generator_class = ep.load()
             _generators[ep.name] = generator_class
     except ImportError:
-        pass  # Skip if entry points are not supported
+        pass
 
 load_generators()

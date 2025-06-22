@@ -126,9 +126,9 @@ class NMEAEncoder:
         return f"${rmc}*{self.calculate_checksum(rmc)}\r\n"
 
 
-class NMEAGenerator(ABC, Iterator):
+class LodeGenerator(ABC, Iterator):
     """
-    Abstract base class for NMEA data generators.
+    Abstract base class for data generators.
     Works as an iterator that yields Position objects.
     """
     def __init__(self) -> None:

@@ -2,12 +2,12 @@ import math
 from datetime import datetime, timezone
 from typing import Optional, Tuple
 
-from lode_server.generator import NMEAGenerator, Position
+from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
 
 
 @register_generator("dynamic")
-class DynamicGenerator(NMEAGenerator):
+class DynamicGenerator(LodeGenerator):
     """
     NMEA generator that simulates circular movement starting FROM the initial point.
     Uses great-circle navigation to account for Earth's curvature.

@@ -1,7 +1,7 @@
 [project]
 name = "lode_server"
 version = "0.1.0"
-description = "NMEA TCP server and generator (dynamic, GeoJSON, CSV, etc)"
+description = "TCP server and generator (dynamic, GeoJSON, CSV, etc)"
 authors = [
     { name = "Andrey Nalivayev", email = "nalivayev@gmail.com" }
 ]

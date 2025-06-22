@@ -2,12 +2,12 @@ from datetime import datetime, timezone
 from typing import List, Optional
 import json
 
-from lode_server.generator import NMEAGenerator, Position
+from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
 
 
 @register_generator("geojson")
-class GeoJSONGenerator(NMEAGenerator):
+class GeoJSONGenerator(LodeGenerator):
     """
     NMEA generator that follows a route defined in GeoJSON format.
     Returns Position objects with recommended duration and transition for each point.

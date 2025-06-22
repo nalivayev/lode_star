@@ -65,16 +65,21 @@ def load_generators():
     # Load external plugins via entry points
     try:
         from importlib.metadata import entry_points
+        
+        # Automatically determine plugin group name from package root
+        root_package = __name__.split('.')[0]
+        plugin_group = f"{root_package}.generators"
+        
         eps = entry_points()
         if hasattr(eps, 'select'):  # Python 3.10+
-            plugins = eps.select(group='lode_server.generators')
+            plugins = eps.select(group=plugin_group)
         else:
-            plugins = eps.get('lode_server.generators', [])
+            plugins = eps.get(plugin_group, [])
         
         for ep in plugins:
             generator_class = ep.load()
             _generators[ep.name] = generator_class
     except ImportError:
         pass
-
+    
 load_generators()

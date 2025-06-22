@@ -10,7 +10,7 @@ requires-python = ">=3.8"
 license = { file = "LICENSE.md" }
 
 [project.scripts]
-lode_star = "lode_server.cli:main"
+lode-server = "lode_server.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

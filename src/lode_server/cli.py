@@ -155,8 +155,7 @@ def run_server(
             except Exception as e:
                 print(f"Error closing client connection: {str(e)}")
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         description="NMEA TCP Server - Simulates GPS data transmission",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -191,3 +190,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error: {str(e)}")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

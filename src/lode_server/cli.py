@@ -177,14 +177,14 @@ def main():
         print("Error: Source must be specified")
         sys.exit(1)
     
-    source_type = args.source[0]
-    source_params = args.source[1:] if len(args.source) > 1 else []
+    source = args.source[0]
+    params = args.source[1:] if len(args.source) > 1 else []
 
     try:
         run_server(
             port=args.port,
-            source_type=source_type,
-            source_params=source_params,
+            source_type=source,
+            source_params=params,
             wait_for_keypress=args.wait_for_keypress
         )
     except Exception as e:

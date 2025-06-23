@@ -8,7 +8,7 @@ _generators: Dict[str, Type[LodeGenerator]] = {}
 
 def register_generator(name: str):
     """
-    Decorator for registering NMEA generator classes.
+    Decorator for registering generator classes.
 
     Args:
         name (str): The name to register the generator under.

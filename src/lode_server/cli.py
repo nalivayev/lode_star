@@ -113,6 +113,7 @@ def print_data(data: Position, counter: int) -> None:
         data (Position): Position object with navigation data.
         counter (int): Point counter for display.
     """
+    description = f"{'Description:':>15}\t{data.description}\n" if data.description else f"{'':>15}\t{'':<12}\n"
     output = (
         f"\n{'Point, #:':>15}\t{counter}\n"
         f"{'Latitude, deg:':>15}\t{data.lat:<12.6f}\n"
@@ -120,7 +121,7 @@ def print_data(data: Position, counter: int) -> None:
         f"{'Speed, km/h:':>15}\t{data.speed:<12.2f}\n"
         f"{'Elevation, m:':>15}\t{data.elevation:<12.2f}\n"
         f"{'Time:':>15}\t{data.time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        f"{'Description:':>15}\t{data.description}\n\n"
+        f"{description}\n"
     )
     print("\033[F" * (output.count('\n')), end="")
     print(output, end="", flush=True)

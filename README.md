@@ -138,7 +138,7 @@ Each feature must be a Point with coordinates `[lon, lat]` and the following pro
 CSV columns:
 
 ```
-point_number,latitude,longitude,speed,elevation,duration,transition,description
+number,latitude,longitude,speed,elevation,duration,transition,description
 ```
 
 - Only the first five columns are required.

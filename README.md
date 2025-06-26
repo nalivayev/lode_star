@@ -17,7 +17,7 @@ It supports three generator sources: dynamic simulation (circular movement), rou
 ## Usage
 
 ```sh
-python -m lode_server.cli <port> --source <type> [params...] [--wait-for-keypress]
+python -m lode_server <port> --source <type> [params...] [--wait-for-keypress]
 ```
 
 ### Sources and Parameters
@@ -39,7 +39,7 @@ dynamic <lat> <lon> [speed=<km/h>] [duration=<seconds>] [radius=<km>] [transitio
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --source dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
+python -m lode_server 10110 --source dynamic 55.7522 37.6156 speed=15.0 duration=2.0 radius=0.2 transition=manual
 ```
 
 #### 2. GeoJSON Playback (`geojson`)
@@ -55,7 +55,7 @@ geojson <path/to/route.json>
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --source geojson path/to/route.json
+python -m lode_server 10110 --source geojson path/to/route.json
 ```
 
 #### 3. CSV Playback (`csv`)
@@ -72,7 +72,7 @@ csv <path/to/route.csv>
 
 **Example:**
 ```
-python -m lode_server.cli 10110 --source csv path/to/route.csv
+python -m lode_server 10110 --source csv path/to/route.csv
 ```
 
 ### Optional Flags

@@ -102,13 +102,13 @@ Longitude, deg:	37.615600
 
 Each feature must be a Point with coordinates `[lon, lat]` and the following properties:
 
-| Property     | Type    | Description                                                                 |
-|--------------|---------|-----------------------------------------------------------------------------|
-| speed        | float   | Speed at this point in **km/h**.                                            |
-| elevation    | float   | Elevation above sea level in meters.                                        |
-| duration     | float   | Duration to stay at this point, in seconds.                                 |
-| transition   | string  | (Optional) Transition mode: `"auto"` (default), `"manual"`, or `"key"`.     |
-| description  | string  | (Optional) Comment or description for this point.                           |
+| Property     | Type    | Description                                                       |
+|--------------|---------|-------------------------------------------------------------------|
+| speed        | float   | Speed at this point in **km/h**.                                  |
+| elevation    | float   | Elevation above sea level in meters.                              |
+| duration     | float   | Duration to stay at this point, in seconds.                       |
+| transition   | string  | (Optional) Transition mode: `"auto"` (default) or `"manual"`.     |
+| description  | string  | (Optional) Comment or description for this point.                 |
 
 **Example:**
 ```json

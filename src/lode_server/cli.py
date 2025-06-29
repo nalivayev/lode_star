@@ -91,40 +91,125 @@ class ClientThread(threading.Thread):
         self.running = False
         self._cleanup()
 
-def create_generator(source: str, *params: Any) -> LodeGenerator:
-    """
-    Factory function to create an Lode generator using the plugin system.
 
-    Args:
-        source (str): The generator source type (dynamic, geojson, csv, etc).
-        *params: Parameters for the generator.
+class LodeServer:
+    """Main server class handling client connections and data broadcasting."""
+    
+    def __init__(self, port: int, source: str, params: List[Any], wait_for_keypress: bool):
+        """
+        Initialize the Lode server.
 
-    Returns:
-        LodeGenerator: An instance of the selected generator.
-    """
-    generator_class = get_generator(source)
-    return generator_class(*params)
+        Args:
+            port: TCP port to listen on
+            source: Generator source type (dynamic, geojson, csv, etc)
+            params: Parameters for the generator
+            wait_for_keypress: Whether to wait for keypress before starting transmission
+        """
+        self.port = port
+        self.source = source
+        self.params = params
+        self.wait_for_keypress = wait_for_keypress
+        self.client_handler = None
+        self.generator = None
+        self.encoder = NMEAEncoder()
+        self.counter = 1
 
-def print_data(data: Position, counter: int) -> None:
-    """
-    Print formatted position data to the console, updating output in-place.
+    def _create_generator(self, source: str, *params: Any) -> LodeGenerator:
+        """
+        Factory function to create an Lode generator using the plugin system.
 
-    Args:
-        data (Position): Position object with navigation data.
-        counter (int): Point counter for display.
-    """
-    description = f"{'Description:':>15}\t{data.description}\n" if data.description else f"{'':>15}\t{'':<12}\n"
-    output = (
-        f"\n{'Point, #:':>15}\t{counter}\n"
-        f"{'Latitude, deg:':>15}\t{data.lat:<12.6f}\n"
-        f"{'Longitude, deg:':>15}\t{data.lon:<12.6f}\n"
-        f"{'Speed, km/h:':>15}\t{data.speed:<12.2f}\n"
-        f"{'Elevation, m:':>15}\t{data.elevation:<12.2f}\n"
-        f"{'Time:':>15}\t{data.time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        f"{description}\n"
-    )
-    print("\033[F" * (output.count('\n')), end="")
-    print(output, end="", flush=True)
+        Args:
+            source: The generator source type (dynamic, geojson, csv, etc)
+            *params: Parameters for the generator
+
+        Returns:
+            An instance of the selected generator
+        """
+        generator_class = get_generator(source)
+        return generator_class(*params)
+
+    def _print_data(self, data: Position) -> None:
+        """
+        Print formatted position data to the console, updating output in-place.
+
+        Args:
+            data: Position object with navigation data
+        """
+        description = f"{'Description:':>15}\t{data.description}\n" if data.description else f"{'':>15}\t{'':<12}\n"
+        output = (
+            f"\n{'Point, #:':>15}\t{self.counter}\n"
+            f"{'Latitude, deg:':>15}\t{data.lat:<12.6f}\n"
+            f"{'Longitude, deg:':>15}\t{data.lon:<12.6f}\n"
+            f"{'Speed, km/h:':>15}\t{data.speed:<12.2f}\n"
+            f"{'Elevation, m:':>15}\t{data.elevation:<12.2f}\n"
+            f"{'Time:':>15}\t{data.time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"{description}\n"
+        )
+        print("\033[F" * (output.count('\n')), end="")
+        print(output, end="", flush=True)
+        self.counter += 1
+
+    def run(self) -> None:
+        """Start the Lode TCP server and begin data transmission."""
+        try:
+            # Start client handler thread
+            self.client_handler = ClientThread(self.port)
+            self.client_handler.start()
+
+            self.generator = self._create_generator(self.source, *self.params)
+
+            print(f"\nLode TCP Server started on port {self.port}")
+            print("=" * 40)
+            print(f"Generator source: {self.source}")
+            if self.params:
+                print(f"Source parameters: {', '.join(str(p) for p in self.params)}")
+            print(f"Wait for keypress: {'Yes' if self.wait_for_keypress else 'No'}")
+            print("=" * 40)
+
+            if self.wait_for_keypress:
+                print("\nServer is waiting for ENTER to start transmission...")
+                input()
+            print("Transmission started!")
+            print("Press Ctrl+C to stop the server\n")
+
+            print("\n" * 7)
+            while True:
+                try:
+                    last_time = time.perf_counter()
+                    data = next(self.generator)
+
+                    self._print_data(data)
+
+                    rmc = self.encoder.encode_rmc(data)
+                    gga = self.encoder.encode_gga(data)
+                    self.client_handler.add_data(rmc, gga)
+
+                    current_time = time.perf_counter()
+                    elapsed = current_time - last_time
+                    remaining_time = data.duration - elapsed
+
+                    if remaining_time > 0.001:
+                        time.sleep(remaining_time)
+                    if data.transition == "manual":
+                        print("Press ENTER to proceed to the next point", end="", flush=True)
+                        input()
+                        print("\n" * 8)
+
+                except KeyboardInterrupt:
+                    break
+                except StopIteration:
+                    break
+                except Exception as e:
+                    print(f"Server error: {str(e)}")
+
+        except Exception as e:
+            print(f"Server initialization error: {str(e)}")
+        finally:
+            print("\nServer stopped gracefully")
+            if self.client_handler:
+                self.client_handler.stop()
+                self.client_handler.join(timeout=1)
+
 
 def run_server(
     port: int,
@@ -132,69 +217,17 @@ def run_server(
     params: List[Any],
     wait_for_keypress: bool
 ) -> None:
-    """Start the Lode TCP server."""
-    try:
-        # Start client handler thread
-        client_handler = ClientThread(port)
-        client_handler.start()
+    """
+    Start the Lode TCP server.
 
-        generator = create_generator(source, *params)
-        encoder = NMEAEncoder()
-        counter = 1
-
-        print(f"\nLode TCP Server started on port {port}")
-        print("=" * 40)
-        print(f"Generator source: {source}")
-        if params:
-            print(f"Source parameters: {', '.join(str(p) for p in params)}")
-        print(f"Wait for keypress: {'Yes' if wait_for_keypress else 'No'}")
-        print("=" * 40)
-
-        if wait_for_keypress:
-            print("\nServer is waiting for ENTER to start transmission...")
-            input()
-            print("Transmission started!")
-        else:
-            print("\nTransmission started automatically")
-            print("Press Ctrl+C to stop the server\n")
-
-        print("\n" * 7)
-        while True:
-            try:
-                last_time = time.perf_counter()
-                data = next(generator)
-
-                print_data(data, counter)
-                counter += 1
-
-                rmc = encoder.encode_rmc(data)
-                gga = encoder.encode_gga(data)
-                client_handler.add_data(rmc, gga)
-
-                current_time = time.perf_counter()
-                elapsed = current_time - last_time
-                remaining_time = data.duration - elapsed
-
-                if remaining_time > 0.001:
-                    time.sleep(remaining_time)
-                if data.transition == "manual":
-                    print("Press ENTER to proceed to the next point", end="", flush=True)
-                    input()
-                    print("\n" * 8)
-
-            except KeyboardInterrupt:
-                break
-            except StopIteration:
-                break
-            except Exception as e:
-                print(f"Server error: {str(e)}")
-
-    except Exception as e:
-        print(f"Server initialization error: {str(e)}")
-    finally:
-        print("\nServer stopped gracefully")
-        client_handler.stop()
-        client_handler.join(timeout=1)
+    Args:
+        port: TCP port to listen on
+        source: Generator source type (dynamic, geojson, csv, etc)
+        params: Parameters for the generator
+        wait_for_keypress: Whether to wait for keypress before starting transmission
+    """
+    server = LodeServer(port, source, params, wait_for_keypress)
+    server.run()
 
 def main():
     parser = argparse.ArgumentParser(
@@ -222,12 +255,7 @@ def main():
     params = args.source[1:] if len(args.source) > 1 else []
 
     try:
-        run_server(
-            port=args.port,
-            source=source,
-            params=params,
-            wait_for_keypress=args.wait_for_keypress
-        )
+        run_server(args.port, source, params, args.wait_for_keypress)
     except Exception as e:
         print(f"Error: {str(e)}")
         sys.exit(1)

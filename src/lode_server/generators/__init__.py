@@ -2,7 +2,8 @@ import importlib
 import pkgutil
 from pathlib import Path
 from typing import Dict, Type
-from ..generator import LodeGenerator
+
+from lode_server.generator import LodeGenerator
 
 _generators: Dict[str, Type[LodeGenerator]] = {}
 

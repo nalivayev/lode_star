@@ -7,7 +7,7 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE.md" }
+license = { file = "LICENSE" }
 
 [project.scripts]
 lode-server = "lode_server.cli:main"

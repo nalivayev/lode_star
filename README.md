@@ -1,15 +1,16 @@
 # Lode Star TCP Server
 
 This project simulates GNSS data transmission over TCP.  
-It supports three generator sources: dynamic simulation (circular movement), route-based playback from a GeoJSON file, and playback from a CSV file.
+It supports several generator sources: dynamic simulation (circular movement), route-based playback from a GeoJSON file, playback from a CSV file, and playback from a file with NMEA sentences.
 
 ## Features
 
 - **NMEA 0183 output** (RMC, GGA sentences)
-- **Three generator sources**:
+- **Multiple generator sources**:
   - **dynamic**: Simulates circular movement from a given point with configurable speed (in km/h), radius, and duration per point
   - **geojson**: Plays back a route from a GeoJSON file, using per-point speed (in km/h), duration, transition mode, and description
   - **csv**: Plays back a route from a CSV file, using per-point speed, duration, transition mode, and description
+  - **nmea**: Plays back a sequence of NMEA sentences from a text file (see below)
 - **TCP server**: Multiple clients can connect and receive the same stream
 - **Console output**: Each point's data is printed in a formatted table and updates in-place
 - **Configurable start**: Optionally wait for user keypress before starting transmission
@@ -75,6 +76,22 @@ csv <path/to/route.csv>
 python -m lode_server 10110 --source csv path/to/route.csv
 ```
 
+#### 4. NMEA File Playback (`nmea`)
+
+Plays back a sequence of NMEA sentences from a text file.  
+Each line in the file should be a valid NMEA sentence (e.g., `$GPRMC,...`, `$GPGGA,...`).  
+Currently, only RMC and GGA sentences are guaranteed to be parsed; others are skipped with a warning.
+
+**Syntax:**
+```
+nmea <path/to/nmea.txt>
+```
+
+**Example:**
+```
+python -m lode_server 10110 --source nmea path/to/nmea.txt
+```
+
 ### Optional Flags
 
 - `--wait-for-keypress` — Wait for user to press ENTER before starting transmission.
@@ -85,7 +102,12 @@ python -m lode_server 10110 --source csv path/to/route.csv
 TCP Server started on port 10110
 ========================================
 Generator source: dynamic
-Source parameters: 55.7522, 37.6156, speed=15.0, duration=2.0, radius=0.2, transition=manual
+         Param 1: 55.7522
+         Param 2: 37.6156
+         Param 3: speed=15.0
+         Param 4: duration=2.0
+         Param 5: radius=0.2
+         Param 6: transition=manual
 Wait for keypress: No
 ========================================
 
@@ -94,8 +116,8 @@ Wait for keypress: No
 Longitude, deg:	37.615600   
    Speed, km/h:	10.00       
   Elevation, m:	0.00        
-          Time:	2025-06-19 12:00:00
-   Description:	
+         Time:	2025-06-19 12:00:00
+  Description:	
 ```
 
 ## GeoJSON Route Format
@@ -151,9 +173,21 @@ number,latitude,longitude,speed,elevation,duration,transition,description
 2,55.7530,37.6200,12.0,121.0,3.0,manual,"Red Square"
 ```
 
+## NMEA File Format
+
+Each line must be a valid NMEA sentence (for example, `$GPRMC,...` or `$GPGGA,...`).  
+Only RMC and GGA sentences are guaranteed to be parsed.  
+If a line cannot be parsed, it will be skipped and a warning will be logged.
+
+**Example:**
+```
+$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A
+$GPGGA,123520,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47
+```
+
 ## Plugin System
 
-Lode Star uses a plugin system for generators. Each generator (for example, dynamic, geojson, csv) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
+Lode Star uses a plugin system for generators. Each generator (for example, dynamic, geojson, csv, nmea) is implemented as a separate Python class and registered using a decorator. This makes it easy to add new generator types without modifying the core server code.
 
 - To add a new generator, create a new Python file in `lode_server/generators/`, define a class that inherits from `LodeGenerator`, and register it with the `@register_generator("your_source_name")` decorator.
 - The generator will be automatically discovered and available via the `--source` command-line option.

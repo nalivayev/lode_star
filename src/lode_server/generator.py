@@ -2,6 +2,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Iterator
 from dataclasses import dataclass
+from datetime import timezone
 
 
 @dataclass
@@ -117,6 +118,91 @@ class NMEAEncoder:
             f"{lon_str},{lon_dir},{speed_knots:.1f},0.0,{date_str},,,A"
         )
         return f"${rmc}*{self.calculate_checksum(rmc)}\r\n"
+
+
+class NMEADecoder:
+    """
+    Decodes NMEA sentences (GGA, RMC) into Position objects.
+    Unsupported or invalid sentences raise exceptions.
+    """
+    @staticmethod
+    def decode(nmea: str) -> Optional[Position]:
+        if not nmea.startswith('$'):
+            raise ValueError("Not a valid NMEA sentence")
+        nmea = nmea.strip()
+        if '*' in nmea:
+            nmea = nmea[:nmea.index('*')]
+        fields = nmea[1:].split(',')
+
+        if fields[0] == 'GPRMC' or fields[0] == 'RMC':
+            if len(fields) < 10 or fields[2] != 'A':
+                raise ValueError("Invalid RMC sentence")
+            time_str = fields[1]
+            date_str = fields[9]
+            lat = NMEADecoder._parse_lat(fields[3], fields[4])
+            lon = NMEADecoder._parse_lon(fields[5], fields[6])
+            speed = float(fields[7]) * 1.852 if fields[7] else 0.0  # knots to km/h
+            elevation = 0.0  # Not present in RMC
+            dt = NMEADecoder._parse_datetime(time_str, date_str)
+            if dt is None:
+                raise ValueError("No valid datetime in RMC")
+            return Position(lat, lon, speed, elevation, dt)
+        elif fields[0] == 'GPGGA' or fields[0] == 'GGA':
+            if len(fields) < 10:
+                raise ValueError("Invalid GGA sentence")
+            time_str = fields[1]
+            lat = NMEADecoder._parse_lat(fields[2], fields[3])
+            lon = NMEADecoder._parse_lon(fields[4], fields[5])
+            elevation = float(fields[9]) if fields[9] else 0.0
+            speed = 0.0  # Not present in GGA
+            dt = NMEADecoder._parse_datetime(time_str)
+            if dt is None:
+                raise ValueError("No valid datetime in GGA")
+            return Position(lat, lon, speed, elevation, dt)
+        raise ValueError("Unsupported NMEA sentence type")
+
+    @staticmethod
+    def _parse_lat(lat_str, ns):
+        if not lat_str or not ns:
+            return 0.0
+        deg = int(lat_str[:2])
+        min = float(lat_str[2:])
+        lat = deg + min / 60
+        if ns == 'S':
+            lat = -lat
+        return lat
+
+    @staticmethod
+    def _parse_lon(lon_str, ew):
+        if not lon_str or not ew:
+            return 0.0
+        deg = int(lon_str[:3])
+        min = float(lon_str[3:])
+        lon = deg + min / 60
+        if ew == 'W':
+            lon = -lon
+        return lon
+
+    @staticmethod
+    def _parse_datetime(time_str, date_str=None):
+        try:
+            if not time_str:
+                return None
+            hour = int(time_str[0:2])
+            minute = int(time_str[2:4])
+            second = int(time_str[4:6])
+            microsecond = int(float('0.' + time_str.split('.')[1]) * 1e6) if '.' in time_str else 0
+            if date_str:
+                day = int(date_str[0:2])
+                month = int(date_str[2:4])
+                year = int(date_str[4:6]) + 2000
+                return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=timezone.utc)
+            else:
+                # Если нет даты — используем сегодняшнюю дату
+                now = datetime.now(timezone.utc)
+                return now.replace(hour=hour, minute=minute, second=second, microsecond=microsecond)
+        except Exception:
+            return None
 
 
 class LodeGenerator(ABC, Iterator):

@@ -1,19 +1,19 @@
 # Lode Star TCP Server
 
-This project simulates GNSS data transmission over TCP.  
-It supports several generator sources: dynamic simulation (circular movement), route-based playback from a GeoJSON file, playback from a CSV file, and playback from a file with NMEA sentences.
+Lode Star is a TCP server for emulating GNSS/NMEA data streams.  
+It supports dynamic simulation (circular movement), route playback from GeoJSON or CSV files, and playback from files containing NMEA sentences.
 
 ## Features
 
 - **NMEA 0183 output** (RMC, GGA sentences)
-- **Multiple generator sources**:
-  - **dynamic**: Simulates circular movement from a given point with configurable speed (in km/h), radius, and duration per point
-  - **geojson**: Plays back a route from a GeoJSON file, using per-point speed (in km/h), duration, transition mode, and description
-  - **csv**: Plays back a route from a CSV file, using per-point speed, duration, transition mode, and description
-  - **nmea**: Plays back a sequence of NMEA sentences from a text file (see below)
-- **TCP server**: Multiple clients can connect and receive the same stream
+- **Flexible plugin-based generator system**:
+  - **dynamic**: Simulates circular movement from a given point with configurable speed, radius, and duration
+  - **geojson**: Plays back a route from a GeoJSON file
+  - **csv**: Plays back a route from a CSV file
+  - **nmea**: Plays back a sequence of NMEA sentences from a text file (one per line)
+- **TCP server**: Multiple clients can connect and receive the same data stream
 - **Console output**: Each point's data is printed in a formatted table and updates in-place
-- **Configurable start**: Optionally wait for user keypress before starting transmission
+- **Optional interactive start**: Use `--wait-for-keypress` to start transmission after pressing ENTER
 
 ## Usage
 

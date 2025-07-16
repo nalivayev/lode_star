@@ -21,11 +21,12 @@ class NMEAGenerator(LodeGenerator):
 
     def _load_file(self, filename: str) -> None:
         """Load NMEA sentences from the specified file and parse them into Position objects."""
-        with open(self.filename, 'r') as f:
+        with open(filename, 'r') as f:
             for line in f:
                 try:
                     pos = NMEADecoder.decode(line)
-                    self.positions.append(pos)
+                    if pos:
+                        self.positions.append(pos)
                 except Exception as e:
                     continue
 

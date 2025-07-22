@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from lode_server.generator import LodeGenerator, Position, NMEADecoder
 from lode_server.generators import register_generator
@@ -15,8 +15,8 @@ class NMEAGenerator(LodeGenerator):
         super().__init__()
         if len(args) < 1:
             raise ValueError("NMEA file path must be specified")
-        self.positions: List[Position] = []
-        self._current_index: int = 0
+        self._positions: list[Position] = []
+        self._index: int = 0
         self._load_file(args[0])
 
     def _load_file(self, filename: str) -> None:
@@ -26,13 +26,13 @@ class NMEAGenerator(LodeGenerator):
                 try:
                     pos = NMEADecoder.decode(line)
                     if pos:
-                        self.positions.append(pos)
+                        self._positions.append(pos)
                 except Exception as e:
                     continue
 
     def _update_position(self) -> Optional[Position]:
-        if self._current_index >= len(self.positions):
+        if self._index >= len(self._positions):
             return None
-        pos = self.positions[self._current_index]
-        self._current_index += 1
+        pos = self._positions[self._index]
+        self._index += 1
         return pos

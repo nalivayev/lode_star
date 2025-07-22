@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
-from typing import List, Optional
-import json
+from typing import Optional
+from json import load
 
 from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
@@ -18,17 +18,16 @@ class GeoJSONGenerator(LodeGenerator):
         if len(args) < 1:
             raise ValueError("Route file path must be specified")
             
-        self.route_file: str = args[0]
-        self.current_index: int = 0
-        self.route_points: List[Position] = []
+        self._index: int = 0
+        self._positions: list[Position] = []
         
-        self._load_route()
+        self._load_file(args[0])
         
-    def _load_route(self) -> None:
+    def _load_file(self, filename: str) -> None:
         """Load and validate the GeoJSON route file"""
         try:
-            with open(self.route_file, 'r') as f:
-                route_data = json.load(f)
+            with open(filename, 'r') as f:
+                route_data = load(f)
                 
             if not isinstance(route_data, dict):
                 raise ValueError("Invalid GeoJSON format")
@@ -53,9 +52,9 @@ class GeoJSONGenerator(LodeGenerator):
                     transition=props.get('transition', 'auto'),
                     description=props.get('description', '')
                 )
-                self.route_points.append(point)
+                self._positions.append(point)
                 
-            if not self.route_points:
+            if not self._positions:
                 raise ValueError("No valid points found in route file")
                 
         except Exception as e:
@@ -67,9 +66,9 @@ class GeoJSONGenerator(LodeGenerator):
         Returns:
             Optional[Position]: Next position data or None if finished
         """
-        if self.current_index >= len(self.route_points):
+        if self._index >= len(self._positions):
             return None
             
-        point = self.route_points[self.current_index]
-        self.current_index += 1
+        point = self._positions[self._index]
+        self._index += 1
         return point

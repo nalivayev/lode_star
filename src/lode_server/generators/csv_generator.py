@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 import csv
 
 from lode_server.generator import LodeGenerator, Position
@@ -28,16 +28,15 @@ class CSVGenerator(LodeGenerator):
         if len(args) < 1:
             raise ValueError("CSV file path must be specified")
             
-        self.filename: str = args[0]
-        self.current_index: int = 0
-        self.route_points: List[Position] = []
+        self._index: int = 0
+        self._positions: list[Position] = []
         
-        self._load_csv()
+        self._load_file(args[0])
         
-    def _load_csv(self) -> None:
+    def _load_file(self, filename: str) -> None:
         """Load and validate the CSV file"""
         try:
-            with open(self.filename, 'r', newline='') as f:
+            with open(filename, 'r', newline='') as f:
                 reader = csv.reader(f)
                 for row in reader:
                     # Skip empty or comment lines
@@ -58,7 +57,7 @@ class CSVGenerator(LodeGenerator):
                     transition = row[6] if len(row) > 6 else "auto"
                     description = row[7] if len(row) > 7 else ""
                     
-                    point = Position(
+                    position = Position(
                         lat=lat,
                         lon=lon,
                         speed=speed,
@@ -68,9 +67,9 @@ class CSVGenerator(LodeGenerator):
                         transition=transition,
                         description=description
                     )
-                    self.route_points.append(point)
+                    self._positions.append(position)
                 
-            if not self.route_points:
+            if not self._positions:
                 raise ValueError("No valid points found in CSV file")
                 
         except Exception as e:
@@ -82,9 +81,9 @@ class CSVGenerator(LodeGenerator):
         Returns:
             Optional[Position]: Next position data or None if finished
         """
-        if self.current_index >= len(self.route_points):
+        if self._index >= len(self._positions):
             return None
             
-        point = self.route_points[self.current_index]
-        self.current_index += 1
+        point = self._positions[self._index]
+        self._index += 1
         return point

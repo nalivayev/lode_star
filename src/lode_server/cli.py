@@ -3,7 +3,7 @@ import socket
 import time
 import sys
 import threading
-from typing import Any, List
+from typing import Any
 from queue import Queue
 
 from lode_server.generator import LodeGenerator, NMEAEncoder, Position
@@ -95,7 +95,7 @@ class ClientThread(threading.Thread):
 class LodeServer:
     """Main server class handling client connections and data broadcasting."""
     
-    def __init__(self, port: int, source: str, params: List[Any], wait_for_keypress: bool):
+    def __init__(self, port: int, source: str, params: list[Any], wait_for_keypress: bool):
         """
         Initialize the Lode server.
 
@@ -214,7 +214,7 @@ class LodeServer:
 def run_server(
     port: int,
     source: str,
-    params: List[Any],
+    params: list[Any],
     wait_for_keypress: bool
 ) -> None:
     """

@@ -1,6 +1,6 @@
 from datetime import datetime
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple, Iterator
+from typing import Optional, Iterator
 from dataclasses import dataclass
 from datetime import timezone
 
@@ -52,7 +52,7 @@ class NMEAEncoder:
     GGA_DGPS_REF = ''               # DGPS reference station ID
     
     @staticmethod
-    def format_coords(lat: float, lon: float) -> Tuple[str, str, str, str]:
+    def format_coords(lat: float, lon: float) -> tuple[str, str, str, str]:
         """
         Format latitude and longitude for NMEA sentences.
         Returns:

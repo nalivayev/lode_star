@@ -1,6 +1,6 @@
 import math
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional
 
 from lode_server.generator import LodeGenerator, Position
 from lode_server.generators import register_generator
@@ -67,7 +67,7 @@ class DynamicGenerator(LodeGenerator):
             math.cos(angular_dist) + math.sin(initial_lat_rad) * math.sin(math.radians(self.center_lat))
         ))
 
-    def _calculate_position_on_circle(self, angle: float) -> Tuple[float, float]:
+    def _calculate_position_on_circle(self, angle: float) -> tuple[float, float]:
         """
         Calculate position on a circle using great-circle navigation.
 

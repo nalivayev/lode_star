@@ -21,8 +21,10 @@ class NMEAGenerator(LodeGenerator):
                     self._duration = float(param.split("=", 1)[1])
                 except Exception:
                     raise ValueError("Invalid duration value")
+        
         self._positions: list[Position] = []
         self._index: int = 0
+        
         self._load_file(args[0])
 
     def _load_file(self, filename: str) -> None:

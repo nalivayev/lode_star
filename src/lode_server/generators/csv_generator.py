@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
-from typing import Optional
 import csv
 
-from lode_server.generator import LodeGenerator, Position
+from lode_server.generator import FileGenerator, Position
 from lode_server.generators import register_generator
 
 
 @register_generator("csv")
-class CSVGenerator(LodeGenerator):
+class CSVGenerator(FileGenerator):
     """
     NMEA generator that reads position data from a CSV file.
     
@@ -28,9 +27,6 @@ class CSVGenerator(LodeGenerator):
         if len(args) < 1:
             raise ValueError("CSV file path must be specified")
             
-        self._index: int = 0
-        self._positions: list[Position] = []
-        
         self._load_file(args[0])
         
     def _load_file(self, filename: str) -> None:
@@ -74,16 +70,3 @@ class CSVGenerator(LodeGenerator):
                 
         except Exception as e:
             raise ValueError(f"Failed to load CSV file: {str(e)}")
-    
-    def _update_position(self) -> Optional[Position]:
-        """
-        Get next point from CSV.
-        Returns:
-            Optional[Position]: Next position data or None if finished
-        """
-        if self._index >= len(self._positions):
-            return None
-            
-        point = self._positions[self._index]
-        self._index += 1
-        return point

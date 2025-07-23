@@ -1,11 +1,9 @@
-from typing import Optional
-
-from lode_server.generator import LodeGenerator, Position, NMEADecoder
+from lode_server.generator import FileGenerator, NMEADecoder
 from lode_server.generators import register_generator
 
 
 @register_generator("nmea")
-class NMEAGenerator(LodeGenerator):
+class NMEAGenerator(FileGenerator):
     """
     Generator that reads NMEA sentences from a file and yields Position objects.
     Each line in the file should be a valid NMEA sentence.
@@ -15,15 +13,18 @@ class NMEAGenerator(LodeGenerator):
         super().__init__()
         if len(args) < 1:
             raise ValueError("NMEA file path must be specified")
-        for param in args[2:]:
+
+        for param in args[1:]:
             if isinstance(param, str) and param.startswith("duration="):
                 try:
                     self._duration = float(param.split("=", 1)[1])
                 except Exception:
                     raise ValueError("Invalid duration value")
-        
-        self._positions: list[Position] = []
-        self._index: int = 0
+            elif isinstance(param, str) and param.startswith("index="):
+                try:
+                    self._index = int(param.split("=", 1)[1])
+                except Exception:
+                    raise ValueError("Invalid duration value")
         
         self._load_file(args[0])
 
@@ -38,10 +39,3 @@ class NMEAGenerator(LodeGenerator):
                         self._positions.append(pos)
                 except Exception as e:
                     continue
-
-    def _update_position(self) -> Optional[Position]:
-        if self._index >= len(self._positions):
-            return None
-        pos = self._positions[self._index]
-        self._index += 1
-        return pos

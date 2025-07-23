@@ -134,7 +134,7 @@ class NMEADecoder:
             nmea = nmea[:nmea.index('*')]
         fields = nmea[1:].split(',')
 
-        if fields[0] == 'GPRMC' or fields[0] == 'RMC':
+        if fields[0] == 'GPRMC' or fields[0] == 'RMC' or fields[0] == 'GNRMC':
             if len(fields) < 10 or fields[2] != 'A':
                 raise ValueError("Invalid RMC sentence")
             time_str = fields[1]
@@ -147,7 +147,7 @@ class NMEADecoder:
             if dt is None:
                 raise ValueError("No valid datetime in RMC")
             return Position(lat, lon, speed, elevation, dt)
-        elif fields[0] == 'GPGGA' or fields[0] == 'GGA':
+        elif fields[0] == 'GPGGA' or fields[0] == 'GGA' or fields[0] == 'GNGGA':
             if len(fields) < 10:
                 raise ValueError("Invalid GGA sentence")
             time_str = fields[1]
@@ -198,7 +198,6 @@ class NMEADecoder:
                 year = int(date_str[4:6]) + 2000
                 return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=timezone.utc)
             else:
-                # Если нет даты — используем сегодняшнюю дату
                 now = datetime.now(timezone.utc)
                 return now.replace(hour=hour, minute=minute, second=second, microsecond=microsecond)
         except Exception:
@@ -238,3 +237,22 @@ class LodeGenerator(ABC, Iterator):
         if data is None:
             raise StopIteration
         return data
+    
+
+class FileGenerator(LodeGenerator):
+
+    _positions: list[Position] = []
+    _index: int = 0
+
+    def _update_position(self) -> Optional[Position]:
+        """
+        Get next point.
+        Returns:
+            Optional[Position]: Next position data or None if finished
+        """
+        if self._index >= len(self._positions):
+            return None
+        position = self._positions[self._index]
+        self._index += 1
+        return position
+

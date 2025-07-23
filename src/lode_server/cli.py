@@ -241,7 +241,8 @@ def main():
                            "Examples:\n"
                            "  dynamic 55.7522 37.6156 [speed=10.0] [duration=1.0]\n"
                            "  geojson path/to/route.json\n"
-                           "  csv path/to/route.csv")
+                           "  csv path/to/route.csv\n"
+                           "  nmea path/to/route.nmea")
     parser.add_argument("--wait-for-keypress", action="store_true",
                       help="Wait for keypress before starting transmission")
     

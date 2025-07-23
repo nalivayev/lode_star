@@ -15,6 +15,12 @@ class NMEAGenerator(LodeGenerator):
         super().__init__()
         if len(args) < 1:
             raise ValueError("NMEA file path must be specified")
+        for param in args[2:]:
+            if isinstance(param, str) and param.startswith("duration="):
+                try:
+                    self._duration = float(param.split("=", 1)[1])
+                except Exception:
+                    raise ValueError("Invalid duration value")
         self._positions: list[Position] = []
         self._index: int = 0
         self._load_file(args[0])
@@ -26,6 +32,7 @@ class NMEAGenerator(LodeGenerator):
                 try:
                     pos = NMEADecoder.decode(line)
                     if pos:
+                        pos.duration = self._duration
                         self._positions.append(pos)
                 except Exception as e:
                     continue

@@ -12,7 +12,7 @@ class DynamicGenerator(LodeGenerator):
     NMEA generator that simulates circular movement starting FROM the initial point.
     Uses great-circle navigation to account for Earth's curvature.
     """
-    EARTH_RADIUS_KM = 6371.0  # Earth's mean radius in km
+    _EARTH_RADIUS_KM = 6371.0  # Earth's mean radius in km
 
     def __init__(self, *args) -> None:
         super().__init__()
@@ -52,7 +52,7 @@ class DynamicGenerator(LodeGenerator):
     def _calculate_center(self, initial_lat: float, initial_lon: float):
         """Calculate center point so that initial point is at angle 0 on the circle"""
         # Move from initial point at 180 degrees (south) to find center
-        angular_dist = self.radius / self.EARTH_RADIUS_KM
+        angular_dist = self.radius / self._EARTH_RADIUS_KM
         initial_lat_rad = math.radians(initial_lat)
         initial_lon_rad = math.radians(initial_lon)
 
@@ -77,7 +77,7 @@ class DynamicGenerator(LodeGenerator):
         Returns:
             Tuple[new_lat, new_lon] in degrees
         """
-        angular_radius = self.radius / self.EARTH_RADIUS_KM
+        angular_radius = self.radius / self._EARTH_RADIUS_KM
         center_lat_rad = math.radians(self.center_lat)
         center_lon_rad = math.radians(self.center_lon)
 

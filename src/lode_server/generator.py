@@ -14,6 +14,7 @@ class Position:
     Used for both static points and route navigation.
 
     Attributes:
+        index (int): Number of a point
         lat (float): Latitude in decimal degrees. Range: -90 to +90.
         lon (float): Longitude in decimal degrees. Range: -180 to +180.
         speed (float): Speed over ground in km/h (nautical miles per hour).
@@ -25,19 +26,20 @@ class Position:
         description (str): Optional description or comment for this position.
     
     Examples:
-        >>> pos = Position(55.7522, 37.6156, 5.0, 120.5, datetime.now(timezone.utc))
-        >>> route_point = Position(59.9343, 30.3351, 10.0, 5.5, 
+        >>> pos = Position(1, 55.7522, 37.6156, 5.0, 120.5, datetime.now(timezone.utc))
+        >>> route_point = Position(1, 59.9343, 30.3351, 10.0, 5.5, 
         ...                          datetime.now(timezone.utc), 
         ...                          duration=2.5, transition='manual', description='Start point')
     """
-    lat: float          # Latitude in degrees
-    lon: float          # Longitude in degrees
-    speed: float        # Speed in km/h
-    elevation: float    # Elevation in meters
-    time: datetime      # Current time
-    duration: float = 0.0    # Duration at current point (for routes)
-    transition: str = "auto" # Transition mode: 'auto', 'manual'
-    description: str = ""    # Optional description or comment
+    index: int                  # Number of a point
+    lat: float                  # Latitude in degrees
+    lon: float                  # Longitude in degrees
+    speed: float                # Speed in km/h
+    elevation: float            # Elevation in meters
+    time: datetime              # Current time
+    duration: float = 0.0       # Duration at current point (for routes)
+    transition: str = "auto"    # Transition mode: 'auto', 'manual'
+    description: str = ""       # Optional description or comment
 
 
 class NMEAEncoder:
@@ -146,7 +148,7 @@ class NMEADecoder:
             dt = NMEADecoder._parse_datetime(time_str, date_str)
             if dt is None:
                 raise ValueError("No valid datetime in RMC")
-            return Position(lat, lon, speed, elevation, dt)
+            return Position(0, lat, lon, speed, elevation, dt)
         elif fields[0] == 'GPGGA' or fields[0] == 'GGA' or fields[0] == 'GNGGA':
             if len(fields) < 10:
                 raise ValueError("Invalid GGA sentence")
@@ -158,7 +160,7 @@ class NMEADecoder:
             dt = NMEADecoder._parse_datetime(time_str)
             if dt is None:
                 raise ValueError("No valid datetime in GGA")
-            return Position(lat, lon, speed, elevation, dt)
+            return Position(0, lat, lon, speed, elevation, dt)
         raise ValueError("Unsupported NMEA sentence type")
 
     @staticmethod
@@ -255,4 +257,3 @@ class FileGenerator(LodeGenerator):
         position = self._positions[self._index]
         self._index += 1
         return position
-

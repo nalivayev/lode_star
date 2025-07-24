@@ -31,6 +31,8 @@ class GeoJSONGenerator(FileGenerator):
             if 'features' not in route_data:
                 raise ValueError("GeoJSON file must contain 'features'")
             
+            index = 1
+            
             for feature in route_data['features']:
                 if feature['geometry']['type'] != 'Point':
                     continue
@@ -39,6 +41,7 @@ class GeoJSONGenerator(FileGenerator):
                 props = feature.get('properties', {})
                 
                 point = Position(
+                    index=index,
                     lat=coords[1],
                     lon=coords[0],
                     speed=float(props.get('speed', 0)),
@@ -49,6 +52,7 @@ class GeoJSONGenerator(FileGenerator):
                     description=props.get('description', '')
                 )
                 self._positions.append(point)
+                index += 1
                 
             if not self._positions:
                 raise ValueError("No valid points found in route file")

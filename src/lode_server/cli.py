@@ -112,7 +112,6 @@ class LodeServer:
         self.client_handler = None
         self.generator = None
         self.encoder = NMEAEncoder()
-        self.counter = 1
 
     def _create_generator(self, source: str, *params: Any) -> LodeGenerator:
         """
@@ -137,7 +136,7 @@ class LodeServer:
         """
         description = f"{'Description:':>15}\t{data.description}\n" if data.description else f"{'':>15}\t{'':<12}\n"
         output = (
-            f"\n{'Point, #:':>15}\t{self.counter}\n"
+            f"\n{'Point, #:':>15}\t{data.index}\n"
             f"{'Latitude, deg:':>15}\t{data.lat:<12.6f}\n"
             f"{'Longitude, deg:':>15}\t{data.lon:<12.6f}\n"
             f"{'Speed, km/h:':>15}\t{data.speed:<12.2f}\n"
@@ -147,7 +146,6 @@ class LodeServer:
         )
         print("\033[F" * (output.count('\n')), end="")
         print(output, end="", flush=True)
-        self.counter += 1
 
     def run(self) -> None:
         """Start the Lode TCP server and begin data transmission."""

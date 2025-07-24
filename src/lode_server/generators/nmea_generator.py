@@ -31,11 +31,14 @@ class NMEAGenerator(FileGenerator):
     def _load_file(self, filename: str) -> None:
         """Load NMEA sentences from the specified file and parse them into Position objects."""
         with open(filename, 'r') as f:
+            index = 1
             for line in f:
                 try:
                     pos = NMEADecoder.decode(line)
                     if pos:
+                        pos.index = index
                         pos.duration = self._duration
                         self._positions.append(pos)
+                        index += 1
                 except Exception as e:
                     continue

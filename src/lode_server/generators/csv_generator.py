@@ -34,6 +34,7 @@ class CSVGenerator(FileGenerator):
         try:
             with open(filename, 'r', newline='') as f:
                 reader = csv.reader(f)
+                index = 1
                 for row in reader:
                     # Skip empty or comment lines
                     if not row or row[0].startswith('#'):
@@ -54,6 +55,7 @@ class CSVGenerator(FileGenerator):
                     description = row[7] if len(row) > 7 else ""
                     
                     position = Position(
+                        index=index,
                         lat=lat,
                         lon=lon,
                         speed=speed,
@@ -64,6 +66,7 @@ class CSVGenerator(FileGenerator):
                         description=description
                     )
                     self._positions.append(position)
+                    index += 1
                 
             if not self._positions:
                 raise ValueError("No valid points found in CSV file")

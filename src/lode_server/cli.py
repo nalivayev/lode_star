@@ -2,6 +2,7 @@ import argparse
 import socket
 import time
 import sys
+import os
 import threading
 from typing import Any
 from queue import Queue
@@ -15,17 +16,17 @@ class ClientThread(threading.Thread):
     
     def __init__(self, port: int):
         super().__init__(daemon=True)
-        self.port = port
-        self.clients = []
-        self.data_queue = Queue()
-        self.running = True
-        self.lock = threading.Lock()
-        self.server_socket = None
+        self._port = port
+        self._clients = []
+        self._data_queue = Queue()
+        self._running = True
+        self._lock = threading.Lock()
+        self._server_socket = None
 
     def _broadcast(self, rmc: str, gga: str) -> None:
         """Send data to all connected clients."""
-        with self.lock:
-            for conn in self.clients[:]:
+        with self._lock:
+            for conn in self._clients[:]:
                 try:
                     conn.sendall(rmc.encode('ascii'))
                     conn.sendall(gga.encode('ascii'))
@@ -34,17 +35,17 @@ class ClientThread(threading.Thread):
                         conn.close()
                     except Exception:
                         pass
-                    self.clients.remove(conn)
+                    self._clients.remove(conn)
 
     def _cleanup(self) -> None:
         """Clean up resources."""
-        with self.lock:
-            for conn in self.clients:
+        with self._lock:
+            for conn in self._clients:
                 try:
                     conn.close()
                 except Exception:
                     pass
-            self.clients.clear()
+            self._clients.clear()
         
         if self.server_socket:
             try:
@@ -57,7 +58,7 @@ class ClientThread(threading.Thread):
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server_socket.bind(('0.0.0.0', self.port))
+            self.server_socket.bind(('0.0.0.0', self._port))
             self.server_socket.listen(5)
             self.server_socket.settimeout(1)
 
@@ -66,14 +67,14 @@ class ClientThread(threading.Thread):
                     # Accept new clients
                     try:
                         conn, addr = self.server_socket.accept()
-                        with self.lock:
-                            self.clients.append(conn)
+                        with self._lock:
+                            self._clients.append(conn)
                     except socket.timeout:
                         pass
 
                     # Process data from queue
-                    while not self.data_queue.empty():
-                        rmc, gga = self.data_queue.get()
+                    while not self._data_queue.empty():
+                        rmc, gga = self._data_queue.get()
                         self._broadcast(rmc, gga)
 
                 except Exception as e:
@@ -84,7 +85,7 @@ class ClientThread(threading.Thread):
 
     def add_data(self, rmc: str, gga: str) -> None:
         """Add data to the broadcast queue."""
-        self.data_queue.put((rmc, gga))
+        self._data_queue.put((rmc, gga))
 
     def stop(self) -> None:
         """Stop the thread gracefully."""
@@ -105,14 +106,14 @@ class LodeServer:
             params: Parameters for the generator
             wait_for_keypress: Whether to wait for keypress before starting transmission
         """
-        self.port = port
-        self.source = source
-        self.params = params
-        self.wait_for_keypress = wait_for_keypress
-        self.client_handler = None
-        self.generator = None
-        self.encoder = NMEAEncoder()
-
+        self._port = port
+        self._source = source
+        self._params = params
+        self._wait_for_keypress = wait_for_keypress
+        self._client_handler = None
+        self._generator = None
+        self._encoder = NMEAEncoder()
+        
     def _create_generator(self, source: str, *params: Any) -> LodeGenerator:
         """
         Factory function to create an Lode generator using the plugin system.
@@ -136,41 +137,40 @@ class LodeServer:
         """
         description = f"{'Description:':>15}\t{data.description}\n" if data.description else f"{'':>15}\t{'':<12}\n"
         output = (
-            f"\n{'Point, #:':>15}\t{data.index}\n"
+            f"{'Point, #:':>15}\t{data.index}\n"
             f"{'Latitude, deg:':>15}\t{data.lat:<12.6f}\n"
             f"{'Longitude, deg:':>15}\t{data.lon:<12.6f}\n"
             f"{'Speed, km/h:':>15}\t{data.speed:<12.2f}\n"
             f"{'Elevation, m:':>15}\t{data.elevation:<12.2f}\n"
             f"{'Time:':>15}\t{data.time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"{description}\n"
+            f"{description}"
         )
-        print("\033[F" * (output.count('\n')), end="")
-        print(output, end="", flush=True)
+        print(output)
 
     def run(self) -> None:
         """Start the Lode TCP server and begin data transmission."""
         try:
             # Start client handler thread
-            self.client_handler = ClientThread(self.port)
+            self.client_handler = ClientThread(self._port)
             self.client_handler.start()
 
-            self.generator = self._create_generator(self.source, *self.params)
+            self.generator = self._create_generator(self._source, *self._params)
 
-            print(f"\nLode TCP Server started on port {self.port}")
+            print(f"\nLode TCP Server started on port {self._port}")
             print("=" * 40)
-            print(f"Generator source: {self.source}")
-            if self.params:
-                print(f"Source parameters: {', '.join(str(p) for p in self.params)}")
-            print(f"Wait for keypress: {'Yes' if self.wait_for_keypress else 'No'}")
+            print(f"Generator source: {self._source}")
+            if self._params:
+                print(f"Source parameters: {', '.join(str(p) for p in self._params)}")
+            print(f"Wait for keypress: {'Yes' if self._wait_for_keypress else 'No'}")
             print("=" * 40)
 
-            if self.wait_for_keypress:
+            if self._wait_for_keypress:
                 print("\nServer is waiting for ENTER to start transmission...")
                 input()
             print("Transmission started!")
             print("Press Ctrl+C to stop the server\n")
 
-            print("\n" * 7)
+            print("\n" * 1)
             while True:
                 try:
                     last_time = time.perf_counter()
@@ -178,8 +178,8 @@ class LodeServer:
 
                     self._print_data(data)
 
-                    rmc = self.encoder.encode_rmc(data)
-                    gga = self.encoder.encode_gga(data)
+                    rmc = self._encoder.encode_rmc(data)
+                    gga = self._encoder.encode_gga(data)
                     self.client_handler.add_data(rmc, gga)
 
                     current_time = time.perf_counter()
@@ -191,7 +191,6 @@ class LodeServer:
                     if data.transition == "manual":
                         print("Press ENTER to proceed to the next point", end="", flush=True)
                         input()
-                        print("\n" * 8)
 
                 except KeyboardInterrupt:
                     break

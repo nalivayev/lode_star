@@ -1,4 +1,4 @@
-from lode_server.generator import FileGenerator, NMEADecoder
+from lode_server.core import FileGenerator, NMEADecoder
 from lode_server.generators import register_generator
 
 

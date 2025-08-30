@@ -2,7 +2,7 @@ import math
 from datetime import datetime, timezone
 from typing import Optional
 
-from lode_server.generator import LodeGenerator, Position
+from lode_server.core import LodeGenerator, Position
 from lode_server.generators import register_generator
 
 

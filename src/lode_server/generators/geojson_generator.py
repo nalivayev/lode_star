@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from json import load
 
-from lode_server.generator import FileGenerator, Position
+from lode_server.core import FileGenerator, Position
 from lode_server.generators import register_generator
 
 

@@ -1,8 +1,7 @@
 import argparse
 import sys
 
-from lode_server.generators import get_generator
-from lode_server.core import run_server
+from lode_server.server import run_server
 
 
 def main():
